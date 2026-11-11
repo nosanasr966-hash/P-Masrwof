@@ -1,0 +1,100 @@
+﻿@page "/expensesList"
+
+@inject IExpenseService ExpenseService
+@inject NavigationManager Navigation
+
+<div class="container mt-4" dir="rtl" style="text-align: right;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"> سجل المصروفات</h2>
+
+        <button class="btn btn-success px-4 fw-bold" @onclick='() => Navigation.NavigateTo("/expense/add")'>
+            إضافة مصروف
+        </button>
+    </div>
+
+    <div class="card bg-light border-0 shadow-sm mb-4">
+        <div class="card-body text-center">
+            <span class="text-muted d-block mb-1">إجمالي المصروفات</span>
+            <h3 class="text-danger fw-bold mb-0">@ExpenseService.GetTotalExpenses().ToString("C2", CultureInfo.GetCultureInfo("ar-LY"))</h3>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            @if (expenses == null || !expenses.Any())
+            {
+                <div class="text-center my-5 py-4">
+                    <p class="text-muted fs-5 mb-0">لا توجد مصروفات مسجلة حالياً.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>العنوان</th>
+                                <th>الفئة</th>
+                                <th>المبلغ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in expenses)
+                            {
+                                <tr>
+                                    <td>@item.Date.ToString("yyyy-MM-dd")</td>
+                                    <td class="fw-semibold">@item.Name</td>
+                                    <td><span class="badge bg-info text-dark px-3 py-2">@item.Category</span></td>
+                                    <td class="text-danger fw-bold">@item.Amount.ToString("C2", CultureInfo.GetCultureInfo("ar-LY"))</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-secondary" @onclick='() => Navigation.NavigateTo($"/expense/view/{item.Id}")'> عرض</button>
+                                            <button class="btn btn-sm btn-outline-primary" @onclick='() => Navigation.NavigateTo($"/expense/edit/{item.Id}")'> تعديل</button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteExpense(item.Id)"> حذف</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Expense> expenses = new();
+
+    protected override void OnInitialized()
+    {
+        LoadExpenses();
+    }
+
+    private void LoadExpenses()
+    {
+        try
+        {
+            expenses = ExpenseService.GetAllExpenses();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void DeleteExpense(Guid id)
+    {
+        try
+        {
+            ExpenseService.DeleteExpense(id);
+            LoadExpenses(); // تحديث القائمة تلقائياً بعد الحذف
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+}
